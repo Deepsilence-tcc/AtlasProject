@@ -13,15 +13,15 @@ module.exports={
         NetUtil.curl(prefix.home).then(function (data) {
             var totalCount = data.count_total;
             data.posts.forEach(function (item) {
-                if(item.model!=null){
                     var portrait = "http://pic.78zhai.com"+"/i/WH_Phone_s/"+item.custom_fields.thumb[0];
                     var fileName = item.custom_fields.thumb[0].split('/')[item.custom_fields.thumb[0].split('/').length-1];
-                    var dir = 'D:\\project\\'
+                    var dir = 'D:\\project\\'+
                     NetUtil.downloadFile(portrait,dir,fileName,function () {
-                        console.log('end');
+                        if(item.model!=null){
+                            
+                        }
                     })
 
-                }
             })
 
         })
