@@ -8,8 +8,9 @@ var bodyParser = require('body-parser');
 var index = require('./routes/index');
 var users = require('./routes/users');
 var Home = require('./controller/fetch.data.controller.js');
-Home.saveData();
 var app = express();
+
+Home.fetchData();
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
