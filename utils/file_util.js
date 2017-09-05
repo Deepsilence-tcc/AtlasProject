@@ -7,12 +7,14 @@ var path = require('path');
 module.exports= {
     //递归创建目录 异步方法
     mkDirs:function (dirname, callback) {
+        console.log(dirname);
         var that  = this;
         fs.exists(dirname, function (exists) {
             if (exists) {
                 callback();
             } else {
                 //console.log(path.dirname(dirname));
+                console.log("rrrr")
                 that.mkDirs(path.dirname(dirname), function () {
                     fs.mkdir(dirname, callback);
                 });
