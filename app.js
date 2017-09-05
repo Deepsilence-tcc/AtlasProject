@@ -8,6 +8,8 @@ var bodyParser = require('body-parser');
 var index = require('./routes/index');
 var users = require('./routes/users');
 var Home = require('./controller/fetch.data.controller.js');
+var db = require('./utils/db');
+db.init();
 var app = express();
 
 Home.fetchData();

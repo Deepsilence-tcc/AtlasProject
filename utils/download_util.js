@@ -13,7 +13,7 @@ var request = require('request');
  */
 module.exports={
     downloadFile:function (uri,dir,filename,callback){
-        var stream = fs.createWriteStream(dir+filename);
+        var stream = fs.createWriteStream(dir+'/'+filename);
         request(uri).pipe(stream).on('close',callback);
     },
     curl:function (uri,callback) {
