@@ -124,6 +124,7 @@ exports.save_model = function (option,callback) {
     });
 }
 exports.save_whole_data = function (option,callback) {
+    console.log(option)
     callback = callback == null? nop:callback;
     var sql = 'INSERT INTO data(id,title,date,is_fav,buy_count,modelId,pic) VALUES(' + option.id + ',"'+ option.title + '","'+option.date+'",'+option.is_fav+','+option.buy_count+','+option.modelId+',"'+option.pic.path+'")';
     console.log(sql);

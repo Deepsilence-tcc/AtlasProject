@@ -6,13 +6,14 @@ var FileUtil = require('../utils/file_util');
 var dbUtil = require('../utils/db');
 // var request = Promise.promisify(require('request'));
 var prefix = {
-    home:'http://vvn.78zhai.com/?json=get_recent_posts&include=id%2Ctitle%2Cdate%2Ccustom_fields%2Cmodel%2Cis_fav%2Cbuy_count%2Ccategories&custom_fields=thumb&count=1',
-    baseModelPath:'/Users/cong/learn/model/',
-    // baseModelPath:'/home/local/model/',
-    // basePicPath:'/home/local/up_to_date/'
-    basePicPath:'/Users/cong/learn/up_to_date/'
+'http://vvn.78zhai.com/?json=get_recent_posts&include=id%2Ctitle%2Cdate%2Ccustom_fields%2Cmodel%2Cis_fav%2Cbuy_count%2Ccategories&custom_fields=thumb&count=5',
+    // baseModelPath:'/Users/cong/learn/model',
+    baseModelPath:"D:\\project\\model\\",
+    basePicPath:"D:\\project\\up_to_date\\"
+    // basePicPath:'/Users/cong/learn/up_to_date/'
 }
 exports.fetchData = function () {
+    // console.log(__dirname);
     console.log('fetchData');
     NetUtil.curl(prefix.home).then(function (data) {
         data.posts.forEach(function (item){
@@ -34,14 +35,25 @@ function checkModel(item){
                 var portrait = "http://pic.78zhai.com"+"/i/WH_Phone_s/"+item.model.portrait;
                 var fileName = item.model.portrait.split('/')[item.model.portrait.split('/').length-1];
                 FileUtil.mkDirs(prefix.baseModelPath,function (err) {
+
+    if(item.model!=null){
+        console.log('errr');
+        dbUtil.is_Exist_model(item.model.id,function (model) {
+            if(model.length>0){
+                saveData(item);
+            }else {
+                if(item.model.portrait!=''&&item.model.portrait!=null){
+                    var portrait = "http://pic.78zhai.com"+"/i/WH_Phone_s/"+item.model.portrait;
+                    var fileName = item.model.portrait.split('/')[item.model.portrait.split('/').length-1];
+                    FileUtil.mkDirs(prefix.baseModelPath,function (err) {
                         var dir = prefix.baseModelPath
                         NetUtil.downloadFile(portrait,dir,fileName,function () {
-                        //    下载完成之后，存储
+                            //    下载完成之后，存储
                             var modelPicPath = {
                                 path:dir+fileName
                             }
                             dbUtil.save_model(Object.assign(item.model,modelPicPath),function (model) {
-                            //    下载完个人信息中的图片，直接返回，这个model
+                                //    下载完个人信息中的图片，直接返回，这个model
                                 item.model = model;
                                 saveData(item);
                             });
@@ -49,9 +61,14 @@ function checkModel(item){
                         })
                     });
 
+                }
             }
-        }
-    })
+        })
+    }else {
+        console.log("jajja")
+        saveData(item);
+    }
+
 }
 function saveData(item) {
     if(item.custom_fields.thumb.length>0&&item.categories.length>0){
@@ -71,13 +88,36 @@ function saveData(item) {
                     console.log("save_whole_data");
                     if(wholeData.length>0){
                         saveCatagoryData(item);
+
+    console.log(item)
+    console.log('saveData');
+        if(item.custom_fields.thumb.length>0&&item.categories.length>0){
+            var fileName = item.custom_fields.thumb[0].split('/')[item.custom_fields.thumb[0].split('/').length-1];
+            var picPath = "http://pic.78zhai.com"+"/i/WH_Phone_s/"+item.custom_fields.thumb[0]
+            var dir = prefix.basePicPath+item.categories[0].id+'\\'+item.id;
+
+            FileUtil.mkDirs(dir,function (err) {
+                console.log("bbbb");
+                NetUtil.downloadFile(picPath,dir,fileName,function () {
+                    console.log("bbbb");
+
+                    //    下载完成之后，存储
+                    var thumbPicPath = {
+                        path:dir+fileName
                     }
+                    item.pic = thumbPicPath;
+                    console.log("adddd");
+                    dbUtil.save_whole_data(item,function (wholeData) {
+                        if(wholeData.length>0){
+                            saveCatagoryData(item);
+                        }
+                    })
                 })
-            })
 
-        });
+            });
 
-    }
+        }
+
 }
 function saveCatagoryData(item){
     console.log('saveCatagoryData');
