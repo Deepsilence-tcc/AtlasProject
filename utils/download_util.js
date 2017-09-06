@@ -5,6 +5,8 @@ var fs = require('fs');
 var Promise = require('bluebird');
 var fetch = Promise.promisify(require('request'));
 var request = require('request');
+var Bagpipe = require('bagpipe');
+var bagpipe = new Bagpipe(20);
 /*
  * url 网络文件地址
  * filename 文件名
@@ -13,8 +15,18 @@ var request = require('request');
  */
 module.exports={
     downloadFile:function (uri,dir,filename,callback){
-        var stream = fs.createWriteStream(dir+'/'+filename);
-        request(uri).pipe(stream).on('close',callback);
+        // var stream = fs.createWriteStream(dir+'/'+filename);
+        // request(uri).pipe(stream).on('close',callback);
+        var downloadImage = function(src, dest, callback) {
+            if (src) {
+                request(src).pipe(fs.createWriteStream(dest)).on('close', callback);
+            }
+
+        };
+
+        var destImage = dir+filename;
+        bagpipe.push(downloadImage, uri, destImage,callback);
+
     },
     curl:function (uri,callback) {
         return new Promise(function (resolve,reject) {

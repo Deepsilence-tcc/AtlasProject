@@ -14,7 +14,6 @@ module.exports= {
                 callback();
             } else {
                 //console.log(path.dirname(dirname));
-                console.log("rrrr")
                 that.mkDirs(path.dirname(dirname), function () {
                     fs.mkdir(dirname, callback);
                 });
