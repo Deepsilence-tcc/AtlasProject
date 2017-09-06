@@ -39,7 +39,6 @@ exports.is_Exist_data=function (id,callback) {
     var sql = 'SELECT * FROM data WHERE id = ' + id ;
     console.log(sql);
     query(sql, function(err, rows, fields) {
-        console.log(rows);
         if (err) {
             callback(false);
             throw err;
@@ -86,8 +85,11 @@ exports.is_Exist_model=function (id,callback) {
         return;
     }
 
-    var sql = 'SELECT * FROM model WHERE id = "' + id + '"';
+    var sql = 'SELECT * FROM model WHERE id = ' + id ;
+    console.log(sql);
+
     query(sql, function(err, rows, fields) {
+        console.log(rows);
         if (err) {
             callback(err);
             throw err;
@@ -105,7 +107,7 @@ exports.is_Exist_model=function (id,callback) {
 //插入model
 exports.save_model = function (option,callback) {
     callback = callback == null? nop:callback;
-    var sql = 'INSERT INTO model(id,name,portrait,is_fav) VALUES("' + option.id + '","' + option.name + '","'+option.path+'","'+option.is_fav+'")';
+    var sql = 'INSERT INTO model(id,name,portrait,is_fav) VALUES(' + option.id + ',"' + option.name + '","'+option.path+'",'+option.is_fav+')';
 
     query(sql, function(err, rows, fields) {
         if (err) {
@@ -123,7 +125,8 @@ exports.save_model = function (option,callback) {
 }
 exports.save_whole_data = function (option,callback) {
     callback = callback == null? nop:callback;
-    var sql = 'INSERT INTO data(id,title,date,is_fav,buy_count,modelId,pic) VALUES("' + option.id + '","' + option.title + '","'+option.date+'","'+option.is_fav+'","'+option.buy_count+'","'+option.modelId+'","'+option.pic+'")';
+    var sql = 'INSERT INTO data(id,title,date,is_fav,buy_count,modelId,pic) VALUES(' + option.id + ',"'+ option.title + '","'+option.date+'",'+option.is_fav+','+option.buy_count+','+option.modelId+',"'+option.pic.path+'")';
+    console.log(sql);
     query(sql, function(err, rows, fields) {
         if (err) {
             if(err.code == 'ER_DUP_ENTRY'){
@@ -139,7 +142,8 @@ exports.save_whole_data = function (option,callback) {
     });
 }
 exports.save_data_catalog = function (option,callback) {
-    var sql = 'INSERT INTO data_cata(dataId,catagoryId) VALUES("' + option.dataId + '","' + option.catagoryId + '")';
+    var sql = 'INSERT INTO data_cata(dataId,catagoryId) VALUES(' + option.dataId + ',' + option.catagoryId + ')';
+    console.log(sql);
     query(sql, function(err, rows, fields) {
         if (err) {
             if(err.code == 'ER_DUP_ENTRY'){
