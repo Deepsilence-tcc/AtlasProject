@@ -21,7 +21,6 @@ module.exports={
             if (src) {
                 request(src).pipe(fs.createWriteStream(dest)).on('close', callback);
             }
-
         };
 
         var destImage = dir+filename;

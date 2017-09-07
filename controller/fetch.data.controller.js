@@ -7,20 +7,18 @@ var dbUtil = require('../utils/db');
 // var request = Promise.promisify(require('request'));
 var prefix = {
     home:'http://vvn.78zhai.com/?json=get_recent_posts&include=id%2Ctitle%2Cdate%2Ccustom_fields%2Cmodel%2Cis_fav%2Cbuy_count%2Ccategories&custom_fields=thumb&count=200&page=1',
-    // baseModelPath:'/Users/cong/learn/model',
+    baseModelPath:'/Users/cong/learn/local/model/',
     // baseModelPath:"D:\\project\\model\\",
     // basePicPath:"D:\\project\\up_to_date\\"
-    // basePicPath:'/Users/cong/learn/up_to_date/'
-    basePicPath:"/home/local/up_to_data/",
-    baseModelPath:"/home/local/model/",
+    basePicPath:'/Users/cong/learn/local/up_to_date/'
+    // basePicPath:"/home/local/up_to_date/",
+    // baseModelPath:"/home/local/model/",
 
 }
 exports.fetchData = function () {
-    // console.log(__dirname);
     console.log('fetchData');
     NetUtil.curl(prefix.home).then(function (data) {
         var totalCount = data.count_total;
-
         data.posts.forEach(function (item){
             dbUtil.is_Exist_data(item.id,function (isExist){
                 if(!isExist){
