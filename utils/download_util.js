@@ -24,6 +24,7 @@ module.exports={
         };
 
         var destImage = dir+filename;
+        console.log(destImage);
         bagpipe.push(downloadImage, uri, destImage,callback);
 
     },

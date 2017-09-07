@@ -37,7 +37,6 @@ exports.is_Exist_data=function (id,callback) {
     }
 
     var sql = 'SELECT * FROM data WHERE id = ' + id ;
-    console.log(sql);
     query(sql, function(err, rows, fields) {
         if (err) {
             callback(false);
@@ -86,7 +85,6 @@ exports.is_Exist_model=function (id,callback) {
     }
 
     var sql = 'SELECT * FROM model WHERE id = ' + id ;
-    console.log(sql);
 
     query(sql, function(err, rows, fields) {
         if (err) {
@@ -125,7 +123,6 @@ exports.save_model = function (option,callback) {
 exports.save_whole_data = function (option,callback) {
     callback = callback == null? nop:callback;
     var sql = 'INSERT INTO data(id,title,date,is_fav,buy_count,modelId,pic) VALUES(' + option.id + ',"'+ option.title + '","'+option.date+'",'+option.is_fav+','+option.buy_count+','+option.modelId+',"'+option.pic.path+'")';
-    console.log(sql);
     query(sql, function(err, rows, fields) {
         if (err) {
             if(err.code == 'ER_DUP_ENTRY'){
@@ -142,7 +139,6 @@ exports.save_whole_data = function (option,callback) {
 }
 exports.save_data_catalog = function (option,callback) {
     var sql = 'INSERT INTO data_cata(dataId,catagoryId) VALUES(' + option.dataId + ',' + option.catagoryId + ')';
-    console.log(sql);
     query(sql, function(err, rows, fields) {
         if (err) {
             if(err.code == 'ER_DUP_ENTRY'){
@@ -157,6 +153,40 @@ exports.save_data_catalog = function (option,callback) {
         }
     });
 
+};
+exports.queryHomeData = function (option,callback) {
+    // var sql = 'select * from data,model where data.modelId=model.id order by cast(date as datetime) desc LIMIT '+(option.pageIndex-1)*option.pageSize+','+option.pageSize;
+    var sql = 'select   a.*,b.*   from   data a   left   join  model b     on   a.modelId=b.id   order by cast(date as datetime) desc'
+   console.log(sql);
+   query(sql,function (err,rows,fields) {
+       if (err) {
+               callback(err);
+               return;
+           callback(err);
+           throw err;
+       }
+       else{
+           callback(rows);
+       }
+   })
+
+
+}
+exports.count_data = function (callback) {
+    var sql = 'SELECT COUNT(id) as count FROM data';
+    query(sql,function (err,count,fields) {
+        if (err) {
+            if(err.code == 'ER_DUP_ENTRY'){
+                callback(err);
+                return;
+            }
+            callback(err);
+            throw err;
+        }
+        else{
+            callback(count);
+        }
+    })
 }
 
 
