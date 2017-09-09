@@ -109,7 +109,7 @@ function checkModel(item){
 }
 function saveData(item) {
     var dir = ''
-    if(item.custom_fields.thumb==null||item.custom_fields.thumb.length==0){
+    if(item.categories==null||item.categories.length==0){
         dir = prefix.basePicPath + item.id+'/';
     }else if(item.custom_fields.thumb!=null&&item.custom_fields.thumb.length > 0&&item.id!=null){
         dir = prefix.basePicPath + item.categories[0].id + '/' + item.id+'/';
