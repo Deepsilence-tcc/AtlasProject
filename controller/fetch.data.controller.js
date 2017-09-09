@@ -7,32 +7,33 @@ var dbUtil = require('../utils/db');
 var url = require("url");
 var mime = require("../utils/type").types;
 var fs = require('fs');
-var path = require('path');
+var Path = require('path');
+var Step = require('../utils/step')
+var CRYPTO = require('crypto');
 
 // var request = Promise.promisify(require('request'));
 var prefix = {
-    home:'http://vvn.78zhai.com/?json=get_recent_posts&include=id%2Ctitle%2Cdate%2Ccustom_fields%2Cmodel%2Cis_fav%2Cbuy_count%2Ccategories&custom_fields=thumb&count=100&page=1',
+    home:'http://vvn.78zhai.com/?json=get_recent_posts&include=id%2Ctitle%2Cdate%2Ccustom_fields%2Cmodel%2Cis_fav%2Cbuy_count%2Ccategories&custom_fields=thumb&count=100&page=',
     // baseModelPath:'/Users/cong/learn/local/model/',
-    // baseModelPath:"D:\\project\\model\\",
-    // basePicPath:"D:\\project\\up_to_date\\"
+    // baseModelPath:"D:/project/model/",
+    // basePicPath:"D:/project/up_to_date/"
     // basePicPath:'/Users/cong/learn/local/up_to_date/'
     basePicPath:"/home/local/up_to_date/",
     baseModelPath:"/home/local/model/",
 
 }
 exports.fetchData = function () {
-    console.log('fetchData');
     //判断当前的数据库所有的条数
 
     NetUtil.curl(prefix.home).then(function (data) {
-        // var totalCount = data.count_total;
+        // var totalCount = 5000;
         var totalCount = data.count_total;
         var self = this;
         dbUtil.count_data(function (count) {
             if(count[0].count==totalCount){
                 return;
             }else {
-                var leftCount = (totalCount-count[0].count)/100+1;
+                var leftCount = parseInt((totalCount-count[0].count)/100)+1;
                 fetchPageData(leftCount);
             }
         })
@@ -40,12 +41,13 @@ exports.fetchData = function () {
     })
 };
 function fetchPageData(leftCount) {
+    var self = this;
     if(leftCount==0){
         return;
     }else {
         NetUtil.curl(prefix.home+leftCount).then(function (data) {
             leftCount--;
-            data.posts.forEach(function (item){data
+            data.posts.forEach(function (item){
                 dbUtil.is_Exist_data(item.id,function (isExist){
                     if(!isExist){
                         if(item.model!=null){
@@ -57,13 +59,16 @@ function fetchPageData(leftCount) {
                     }
                 })
             })
-            setTimeout(fetchPageData(leftCount),10000);
+
+            setTimeout(function () {
+                console.log(leftCount);
+               fetchPageData(leftCount);
+            },10000);
         })
     }
 
 }
 function checkModel(item){
-    console.log('checkModel');
     dbUtil.is_Exist_model(item.model.id,function (model) {
         if (model.id) {
             saveData(item);
@@ -103,12 +108,16 @@ function checkModel(item){
     });
 }
 function saveData(item) {
-    if (item.custom_fields.thumb.length > 0 && item.categories.length > 0) {
+    var dir = ''
+    if(item.custom_fields.thumb==null||item.custom_fields.thumb.length==0){
+        dir = prefix.basePicPath + item.id+'/';
+    }else if(item.custom_fields.thumb!=null&&item.custom_fields.thumb.length > 0&&item.id!=null){
+        dir = prefix.basePicPath + item.categories[0].id + '/' + item.id+'/';
+    }
+    if (item.custom_fields.thumb!=null&&item.custom_fields.thumb.length > 0&&item.id!=null) {
         var fileName = item.custom_fields.thumb[0].split('/')[item.custom_fields.thumb[0].split('/').length - 1];
         var picPath = "http://pic.78zhai.com" + "/i/WH_Phone_s/" + item.custom_fields.thumb[0]
-        var dir = prefix.basePicPath + item.categories[0].id + '\\' + item.id+'\\';
         FileUtil.mkDirs(dir, function (err) {
-            console.log("aaaaa");
             NetUtil.downloadFile(picPath, dir, fileName, function () {
                 //    下载完成之后，存储
                 var thumbPicPath = {
@@ -122,7 +131,9 @@ function saveData(item) {
                 }
                 dbUtil.save_whole_data(item, function (wholeData) {
                     if (wholeData) {
-                        saveCatagoryData(item);
+                        if(item.custom_fields.thumb!=null&&item.custom_fields.thumb.length > 0){
+                            saveCatagoryData(item);
+                        }
                     }
                 })
             })
@@ -131,9 +142,7 @@ function saveData(item) {
     }
 }
 function saveCatagoryData(item){
-    console.log('saveCatagoryData');
     dbUtil.save_data_catalog({dataId:item.id,catagoryId:item.categories[0].id},function (cata_data){
-        console.log("ok");
     })
 };
 
@@ -150,7 +159,6 @@ exports.getData=function(req,res,next){
 
 
     dbUtil.queryHomeData(op,function (rows) {
-        console.log(rows.length)
 
         if(rows.length>0){
             resultModel.code=1;
@@ -170,32 +178,123 @@ exports.getData=function(req,res,next){
 
 
 exports.getPic = function (req,res,next) {
+    load_local_img(req,res,{});
+};
 
-    console.log(url.parse(req.url).pathname);
-    var realPath =  url.parse(req.url).pathname;
-    console.log(realPath);
+var staticFileServer_CONFIG = {
+    'file_expiry_time': 480,        // 缓存期限 HTTP cache expiry time, minutes
+    'directory_listing': true       // 是否打开 文件 列表
+};
 
-    var ext = path.extname(realPath);
 
-    ext = ext ? ext.slice(1) : 'unknown';
+var MIME_TYPES = {
+    '.txt': 'text/plain',
+    '.md': 'text/plain',
+    '': 'text/plain',
+    '.html': 'text/html',
+    '.css': 'text/css',
+    '.js': 'application/javascript',
+    '.json': 'application/json',
+    '.jpg': 'image/jpeg',
+    '.png': 'image/png',
+    '.gif': 'image/gif'
+};
 
-    fs.readFile(realPath, "binary", function(err, file) {
+MIME_TYPES['.htm'] = MIME_TYPES['.html'];
 
-                if (err) {
-                    res.writeHead(500, {'Content-Type': 'text/plain'});
+var httpEntity = {
+    contentType: null,
+    data: null,
+    getHeaders: function (EXPIRY_TIME) {
+        // 返回 HTTP Meta 的 Etag。可以了解 md5 加密方法
+        var hash = CRYPTO.createHash('md5');
+        //hash.update(this.data);
+        //var etag = hash.digest('hex');
 
-                    res.end(err);
+        return {
+            'Content-Type': this.contentType,
+            'Content-Length': this.data.length,
+            //'Cache-Control': 'max-age=' + EXPIRY_TIME,
+            //'ETag': etag
+        };
+    }
+};
 
-                } else {
 
-                    res.writeHead(200, {'Content-Type': 'text/html'});
+function load_local_img(request, response, params) {
+    if (Path.extname(request.url) === '') {
+        // connect.directory('C:/project/bigfoot')(request, response, function(){});
+        // 如果 url 只是 目录 的，则列出目录
+        console.log('如果 url 只是 目录 的，则列出目录');
+        server500(response, '如果 url 只是 目录 的，则列出目录@todo');
+    } else {
+        var picUrl =request.url.substring(0,request.url.length);
+        var pathname = require('url').parse(picUrl).pathname;
+        // 如果 url 是 目录 + 文件名 的，则返回那个文件
+        var path = pathname;
 
-                    res.write(file, "binary");
+        Step(function () {
+            console.log('请求 url :' + request.url + ', path : ' + pathname);
+            fs.exists(path, this);
+        }, function (path_exists, err) {
+            if (err) {
+                server500(response, '查找文件失败！');
+                return;
+            }
+            if (path_exists) {
+                fs.readFile(path, this);
+            } else {
+                response.writeHead(404, { 'Content-Type': 'text/plain;charset=utf-8' });
+                response.end('找不到 ' + path + '\n');
+            }
+        }, function (err, data) {
+            if (err) {
+                server500(response, '读取文件失败！');
+                return;
+            }
+            // var extName = '.' + path.split('.').pop();
+            var extName = Path.extname(path);
 
-                    res.end();
+            var  extName = extName ? extName.slice(1) : 'unknown';
+            console.log(extName);
 
-                }
+            var extName = MIME_TYPES[extName] || 'text/plain';
 
-            });
+            var _httpEntity = Object.create(httpEntity);
+            _httpEntity.contentType = extName;
+            var buData = new Buffer(data);
+            //images(buData).height(100);
 
+            var newImage;
+
+            if (params.w && params.h) {
+                newImage = images(buData).resize(Number(params.w), Number(params.h)).encode("jpg", { operation: 50 });
+            } else if (params.w) {
+                newImage = images(buData).resize(Number(params.w)).encode("jpg", { operation: 50 });
+            } else if (params.h) {
+                newImage = images(buData).resize(null, Number(params.h)).encode("jpg", { operation: 50 });
+            } else {
+                newImage = buData; // 原图
+            }
+
+            _httpEntity.data = newImage;
+
+            // 命中缓存，Not Modified返回 304
+            if (request.headers.hasOwnProperty('if-none-match') && request.headers['if-none-match'] === _httpEntity.ETag) {
+                response.writeHead(304);
+                response.end();
+            } else {
+                // 缓存过期时限
+                var EXPIRY_TIME = (staticFileServer_CONFIG.file_expiry_time * 60).toString();
+
+                response.writeHead(200, _httpEntity.getHeaders(EXPIRY_TIME));
+                response.end(_httpEntity.data);
+            }
+        });
+    }
+}
+function server500(response, msg) {
+    console.log(msg);
+    response.writeHead(404, { 'Content-Type': 'text/plain;charset=utf-8' });
+    response.end(msg + '\n');
 }

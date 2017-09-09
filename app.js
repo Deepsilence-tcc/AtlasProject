@@ -27,19 +27,18 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 var HomeController = require('./controller/fetch.data.controller');
 
-
-app.use('/', index);
-app.use('/users', users);
-app.use('/home',HomeController.getPic);
+app.use('/pic',HomeController.getPic);
+app.use('/data',HomeRouter);
 
 
 
 var rule = new schedule.RecurrenceRule();
 rule.minute = [0,5,10,15,20,25,30,35,40,45,50,55,60];
+// rule.second = [0,60];
 
 function scheduleCronstyle(){
     schedule.scheduleJob(rule, function(){
-        // Home.fetchData();
+        Home.fetchData();
     });
 }
 

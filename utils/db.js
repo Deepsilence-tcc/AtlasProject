@@ -155,9 +155,8 @@ exports.save_data_catalog = function (option,callback) {
 
 };
 exports.queryHomeData = function (option,callback) {
-    // var sql = 'select * from data,model where data.modelId=model.id order by cast(date as datetime) desc LIMIT '+(option.pageIndex-1)*option.pageSize+','+option.pageSize;
-    var sql = 'select   a.*,b.*   from   data a   left   join  model b     on   a.modelId=b.id   order by cast(date as datetime) desc'
-   console.log(sql);
+    var sql = 'select   a.id,a.title,a.is_fav,a.buy_count,a.date,a.pic,b.*   from   data a   left   join  model b     on   a.modelId=b.id   order by date  desc LIMIT '+(option.pageIndex-1)*option.pageSize+','+option.pageSize;
+    //var sql = 'select   a.id,a.title.a.is_fav,a.buy_count,a.date,a.pic,b.*   from   data a   left   join  model b     on   a.modelId=b.id   order by date  desc'
    query(sql,function (err,rows,fields) {
        if (err) {
                callback(err);
