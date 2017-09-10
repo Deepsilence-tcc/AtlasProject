@@ -38,7 +38,7 @@ rule.second = [0,60];
 
 function scheduleCronstyle(){
     schedule.scheduleJob(rule, function(){
-        // Home.fetchData();
+        Home.fetchData();
     });
 }
 

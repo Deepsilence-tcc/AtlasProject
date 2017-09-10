@@ -10,15 +10,17 @@ var fs = require('fs');
 var Path = require('path');
 var Step = require('../utils/step')
 var CRYPTO = require('crypto');
+var HomeData = require('../model/home.data.model');
+
 
 // var request = Promise.promisify(require('request'));
 var prefix = {
     home:'http://vvn.78zhai.com/?json=get_recent_posts&include=id%2Ctitle%2Cdate%2Ccustom_fields%2Cmodel%2Cis_fav%2Cbuy_count%2Ccategories&custom_fields=thumb&count=100&page=',
-    baseModelPath:'/Users/cong/learn/local/model/',
-    basePicPath:'/Users/cong/learn/local/up_to_date/'
+    // baseModelPath:'/Users/cong/learn/local/model/',
+    // basePicPath:'/Users/cong/learn/local/up_to_date/'
 
-    // baseModelPath:"D:/project/model/",
-    // basePicPath:"D:/project/up_to_date/"
+    baseModelPath:"D:/project/model/",
+    basePicPath:"D:/project/up_to_date/"
     // basePicPath:"/home/local/up_to_date/",
     // baseModelPath:"/home/local/model/",
 
@@ -162,10 +164,11 @@ exports.getData=function(req,res,next){
     dbUtil.queryHomeData(op,function (rows) {
 
         if(rows.length>0){
+            // var homeData = new HomeData(rows);
             resultModel.code=1;
             resultModel.pageIndex=reqPageIndex;
             resultModel.pageSize = reqPageSize;
-            resultModel.posts=rows;
+            resultModel.posts=generateStruct(rows);
         }else if(rows.length==0){
             resultModel.code=4;
             resultModel.pageIndex=reqPageIndex;
@@ -175,6 +178,33 @@ exports.getData=function(req,res,next){
         return res.json(resultModel);
     })
 
+}
+generateStruct = function (rows){
+    var result = {};
+    var datas = [];
+    rows.forEach(function (item) {
+        if(item.id1!=null){
+            result.model={
+                id:item.id1,
+                name:item.name,
+                portrait:item.portrait,
+                is_fav:item.fav,
+            }
+        }else {
+            result.model=null
+        }
+        result.id = item.id;
+        result.title = item.title;
+        result.date = item.date;
+        result.buy_count = item.buy_count;
+        result.is_fav = item.is_fav;
+        if(item.pic!=null){
+            result.pic = item.pic;
+        }
+        datas.push(result);
+
+    })
+    return datas;
 }
 
 
