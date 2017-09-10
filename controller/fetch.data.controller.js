@@ -14,20 +14,21 @@ var CRYPTO = require('crypto');
 // var request = Promise.promisify(require('request'));
 var prefix = {
     home:'http://vvn.78zhai.com/?json=get_recent_posts&include=id%2Ctitle%2Cdate%2Ccustom_fields%2Cmodel%2Cis_fav%2Cbuy_count%2Ccategories&custom_fields=thumb&count=100&page=',
-    // baseModelPath:'/Users/cong/learn/local/model/',
+    baseModelPath:'/Users/cong/learn/local/model/',
+    basePicPath:'/Users/cong/learn/local/up_to_date/'
+
     // baseModelPath:"D:/project/model/",
     // basePicPath:"D:/project/up_to_date/"
-    // basePicPath:'/Users/cong/learn/local/up_to_date/'
-    basePicPath:"/home/local/up_to_date/",
-    baseModelPath:"/home/local/model/",
+    // basePicPath:"/home/local/up_to_date/",
+    // baseModelPath:"/home/local/model/",
 
 }
 exports.fetchData = function () {
     //判断当前的数据库所有的条数
 
     NetUtil.curl(prefix.home).then(function (data) {
-        // var totalCount = 5000;
-        var totalCount = data.count_total;
+        var totalCount = 200;
+        // var totalCount = data.count_total;
         var self = this;
         dbUtil.count_data(function (count) {
             if(count[0].count==totalCount){

@@ -2,7 +2,7 @@ module.exports={
     db:{
         HOST:'127.0.0.1',
         USER:'root',
-        PSWD:'tcc*zym',
+        PSWD:'123456',
         DB:'statics',
         PORT:3306
     }
