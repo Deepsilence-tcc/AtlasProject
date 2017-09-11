@@ -66,7 +66,7 @@ function fetchPageData(leftCount) {
             setTimeout(function () {
                 console.log(leftCount);
                fetchPageData(leftCount);
-            },10000);
+            },5000);
         })
     }
 
@@ -134,6 +134,17 @@ function saveData(item) {
                 }
                 dbUtil.save_whole_data(item, function (wholeData) {
                     if (wholeData) {
+                        var detailUrl = 'http://vvn.78zhai.com/?p=" '+ item.id +' "&json=1&include=title%2Ccustom_fields&custom_fields=Cntpic%2Cprice%2Cvideo';
+                        NetUtil.curl(detailUrl,function (contentDetail) {
+                            if(contentDetail.custom_fields.Cntpic.length>0){
+                                var detailPic = contentDetail.custom_fields.Cntpic.split('|&|');
+                                var contentDir = '/home/local/'+item.id;
+                                setTimeout(function () {
+                                    downDetailPic(detailPic,item.id,detailPic.length,contentDir);
+                                },5000);
+                            }
+                        })
+
                         if(item.custom_fields.thumb!=null&&item.custom_fields.thumb.length > 0){
                             saveCatagoryData(item);
                         }
@@ -148,6 +159,30 @@ function saveCatagoryData(item){
     dbUtil.save_data_catalog({dataId:item.id,catagoryId:item.categories[0].id},function (cata_data){
     })
 };
+function downDetailPic(picUrls,dataId,len,dir) {
+    if(len==0){
+        return;
+    }else {
+        var finalPath = '';
+
+        FileUtil.mkDirs(dir,function () {
+            len--;
+            var fileName = picUrls[len].split('/')[picUrls[len].split('/').length-1];
+            NetUtil.downloadFile(picUrls[len],dir,fileName,function () {
+            //    下载完成之后， 更新数据库
+                if(len==1){
+                    finalPath += dir+fileName;
+                }else {
+                    fileName += dir+fileName+'|&|'
+                }
+            })
+        })
+
+        setTimeout(function () {
+            downDetailPic(picUrls,dataId,len,dir);
+        },1000);
+    }
+}
 
 exports.getData=function(req,res,next){
     var resultModel ={};
@@ -180,9 +215,18 @@ exports.getData=function(req,res,next){
 
 }
 generateStruct = function (rows){
-    var result = {};
     var datas = [];
+
     rows.forEach(function (item) {
+        var result = {};
+
+        console.log(item);
+        result.id = item.id;
+        result.title = item.title;
+        result.date = item.date;
+        result.buy_count = item.buy_count;
+        result.is_fav = item.is_fav;
+
         if(item.id1!=null){
             result.model={
                 id:item.id1,
@@ -193,11 +237,7 @@ generateStruct = function (rows){
         }else {
             result.model=null
         }
-        result.id = item.id;
-        result.title = item.title;
-        result.date = item.date;
-        result.buy_count = item.buy_count;
-        result.is_fav = item.is_fav;
+
         if(item.pic!=null){
             result.pic = item.pic;
         }

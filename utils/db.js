@@ -155,7 +155,7 @@ exports.save_data_catalog = function (option,callback) {
 
 };
 exports.queryHomeData = function (option,callback) {
-    var sql = 'select   a.id,a.title,a.is_fav,a.buy_count,a.date,a.pic,b.name,b.portrait,b.id as id1,b.is_fav as fav from   data a  join  model b     on   a.modelId=b.id   order by date  desc LIMIT '+(option.pageIndex-1)*option.pageSize+','+option.pageSize;
+    var sql = 'select   a.id,a.title,a.is_fav,a.buy_count,a.date,a.pic,b.name,b.portrait,b.id as id1,b.is_fav as fav from   data a  left join  model b     on   a.modelId=b.id   order by date  desc LIMIT '+(option.pageIndex-1)*option.pageSize+','+option.pageSize;
     // select U.value,C.value from mete as M join cat as C on C.cid=M.cid join user as U on U.uid=M.uid
     //var sql = 'select   a.id,a.title.a.is_fav,a.buy_count,a.date,a.pic,b.*   from   data a   left   join  model b     on   a.modelId=b.id   order by date  desc'
    query(sql,function (err,rows,fields) {
@@ -187,6 +187,14 @@ exports.count_data = function (callback) {
             callback(count);
         }
     })
+}
+exports.queryDetail = function (option,callback) {
+    var sql = 'select a.id,a.title from data a ';
+
+}
+exports.saveDetail = function (option,callback) {
+    var sql = 'UPDATE data SET del'
+    'UPDATE persondata SET age=age*2, age=age+1;'
 }
 
 
