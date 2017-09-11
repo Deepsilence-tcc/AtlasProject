@@ -15,7 +15,7 @@ var HomeData = require('../model/home.data.model');
 
 // var request = Promise.promisify(require('request'));
 var prefix = {
-    home:'http://vvn.78zhai.com/?json=get_recent_posts&include=id%2Ctitle%2Cdate%2Ccustom_fields%2Cmodel%2Cis_fav%2Cbuy_count%2Ccategories&custom_fields=thumb&count=100&page=',
+    home:'http://vvn.78zhai.com/?json=get_recent_posts&include=id%2Ctitle%2Cdate%2Ccustom_fields%2Cmodel%2Cis_fav%2Cbuy_count%2Ccategories&custom_fields=thumb&count=5&page=',
     // baseModelPath:'/Users/cong/learn/local/model/',
     // basePicPath:'/Users/cong/learn/local/up_to_date/'
 
@@ -29,7 +29,7 @@ exports.fetchData = function () {
     //判断当前的数据库所有的条数
 
     NetUtil.curl(prefix.home).then(function (data) {
-        var totalCount = 200;
+        var totalCount = 5;
         // var totalCount = data.count_total;
         var self = this;
         dbUtil.count_data(function (count) {
@@ -132,16 +132,17 @@ function saveData(item) {
                 }else {
                     item.modelId = null;
                 }
+                item.detail = '';
                 dbUtil.save_whole_data(item, function (wholeData) {
                     if (wholeData) {
-                        var detailUrl = 'http://vvn.78zhai.com/?p=" '+ item.id +' "&json=1&include=title%2Ccustom_fields&custom_fields=Cntpic%2Cprice%2Cvideo';
-                        NetUtil.curl(detailUrl,function (contentDetail) {
-                            if(contentDetail.custom_fields.Cntpic.length>0){
-                                var detailPic = contentDetail.custom_fields.Cntpic.split('|&|');
-                                var contentDir = '/home/local/'+item.id;
-                                setTimeout(function () {
-                                    downDetailPic(detailPic,item.id,detailPic.length,contentDir);
-                                },5000);
+                        var detailUrl = "http://vvn.78zhai.com/?p="+item.id +"&json=1&include=title%2Ccustom_fields&custom_fields=Cntpic%2Cprice%2Cvideo";
+                        NetUtil.curl(detailUrl).then(function (contentDetail) {
+                            if(contentDetail.post&&contentDetail.post.custom_fields.Cntpic.length>0){
+                                console.log('ssdfsdfs');
+                                var detailPic = contentDetail.post.custom_fields.Cntpic[0].split('|&|');
+                                var contentDir = 'D:/project/'+item.id;
+                                downDetailPic(detailPic,item.id,detailPic.length,contentDir);
+
                             }
                         })
 
@@ -160,27 +161,33 @@ function saveCatagoryData(item){
     })
 };
 function downDetailPic(picUrls,dataId,len,dir) {
+    console.log(picUrls,dataId,len,dir);
     if(len==0){
         return;
     }else {
-        var finalPath = '';
-
+        console.log(picUrls)
         FileUtil.mkDirs(dir,function () {
             len--;
             var fileName = picUrls[len].split('/')[picUrls[len].split('/').length-1];
-            NetUtil.downloadFile(picUrls[len],dir,fileName,function () {
-            //    下载完成之后， 更新数据库
+            var picPath = "http://pic.78zhai.com" + "/i/WH_Phone_s/"+picUrls[len];
+            console.log(picPath);
+            NetUtil.downloadFile(picPath,dir,fileName,function () {
+                var finalPath = '';
+                //    下载完成之后， 更新数据库
                 if(len==1){
-                    finalPath += dir+fileName;
+                    finalPath += (dir+fileName);
+                    dbUtil.saveDetail({id:dataId,path:finalPath},function (final) {
+                        console.log("ok");
+                    })
                 }else {
-                    fileName += dir+fileName+'|&|'
+                    finalPath += (dir+fileName+'|&|');
                 }
             })
         })
 
         setTimeout(function () {
             downDetailPic(picUrls,dataId,len,dir);
-        },1000);
+        },4000);
     }
 }
 

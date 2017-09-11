@@ -37,7 +37,7 @@ var rule = new schedule.RecurrenceRule();
 rule.second = [0,60];
 
 function scheduleCronstyle(){
-    schedule.scheduleJob(rule, function(){
+    schedule.scheduleJob('40 48 0 * * *', function(){
         Home.fetchData();
     });
 }

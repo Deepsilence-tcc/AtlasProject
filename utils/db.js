@@ -122,7 +122,7 @@ exports.save_model = function (option,callback) {
 }
 exports.save_whole_data = function (option,callback) {
     callback = callback == null? nop:callback;
-    var sql = 'INSERT INTO data(id,title,date,is_fav,buy_count,modelId,pic) VALUES(' + option.id + ',"'+ option.title + '","'+option.date+'",'+option.is_fav+','+option.buy_count+','+option.modelId+',"'+option.pic.path+'")';
+    var sql = 'INSERT INTO data(id,title,date,is_fav,buy_count,modelId,pic,detail) VALUES(' + option.id + ',"'+ option.title + '","'+option.date+'",'+option.is_fav+','+option.buy_count+','+option.modelId+',"'+option.pic.path+'","'+option.detail+'")';
     query(sql, function(err, rows, fields) {
         if (err) {
             if(err.code == 'ER_DUP_ENTRY'){
@@ -193,8 +193,21 @@ exports.queryDetail = function (option,callback) {
 
 }
 exports.saveDetail = function (option,callback) {
-    var sql = 'UPDATE data SET del'
-    'UPDATE persondata SET age=age*2, age=age+1;'
+    var sql = 'UPDATE data SET detail="'+option.path+'"where id='+option.id;
+    console.log(sql);
+    query(sql,function (err,count,fields) {
+        if (err) {
+            if(err.code == 'ER_DUP_ENTRY'){
+                callback(err);
+                return;
+            }
+            callback(err);
+            throw err;
+        }
+        else{
+            callback(count);
+        }
+    })
 }
 
 
