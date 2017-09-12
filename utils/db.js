@@ -247,12 +247,13 @@ exports.getData = function (pageIndex,callback) {
 };
 exports.is_Exist_detail=function (dataId,callback) {
     callback = callback == null? nop:callback;
-    if(id == null){
+    if(dataId == null){
         callback(false);
         return;
     }
 
-    var sql = 'SELECT * FROM detail WHERE dataId = ' + dataId ;
+    var sql = 'SELECT  d.content FROM detail d WHERE dataId = ' + parseInt(dataId) ;
+    console.log(sql);
     query(sql, function(err, rows, fields) {
         if (err) {
             callback(false);
@@ -261,7 +262,7 @@ exports.is_Exist_detail=function (dataId,callback) {
         else{
             if(rows.length > 0){
 
-                callback(true);
+                callback(rows[0]);
             }
             else{
                 callback(false);

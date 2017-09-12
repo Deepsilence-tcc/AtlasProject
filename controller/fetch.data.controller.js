@@ -447,3 +447,9 @@ function server500(response, msg) {
     response.writeHead(404, { 'Content-Type': 'text/plain;charset=utf-8' });
     response.end(msg + '\n');
 }
+
+exports.fetchDetailData=function (req,res,next) {
+    dbUtil.is_Exist_detail(req.query.dataId,function (row) {
+        return res.json(row)
+    })
+}
