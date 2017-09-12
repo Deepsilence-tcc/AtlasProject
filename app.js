@@ -29,20 +29,25 @@ var HomeController = require('./controller/fetch.data.controller');
 
 app.use('/pic',HomeController.getPic);
 app.use('/data',HomeRouter);
-
-
+// Home.fetchData();
+Home.fetchDetail();
 
 var rule = new schedule.RecurrenceRule();
 // rule.minute = [0,5,10,15,20,25,30,35,40,45,50,55,60];
 rule.second = [0,60];
 
 function scheduleCronstyle(){
-    schedule.scheduleJob('40 48 0 * * *', function(){
+    schedule.scheduleJob('40 41 0 * * *', function(){
         Home.fetchData();
     });
 }
-
+function scheduleDetailstyle(){
+    schedule.scheduleJob('40 29 0 * * *', function(){
+        Home.fetchDetail();
+    });
+}
 scheduleCronstyle();
+scheduleDetailstyle();
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

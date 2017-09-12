@@ -15,17 +15,17 @@ var bagpipe = new Bagpipe(20);
  */
 module.exports={
     downloadFile:function (uri,dir,filename,callback){
-        // var stream = fs.createWriteStream(dir+'/'+filename);
-        // request(uri).pipe(stream).on('close',callback);
-        var downloadImage = function(src, dest, callback) {
-            if (src) {
-                request(src).pipe(fs.createWriteStream(dest)).on('close', callback);
-            }
-        };
-
-        var destImage = dir+filename;
-        console.log(destImage);
-        bagpipe.push(downloadImage, uri, destImage,callback);
+        var stream = fs.createWriteStream(dir+'/'+filename);
+        request(uri).pipe(stream).on('close',callback);
+        // var downloadImage = function(src, dest, callback) {
+        //     if (src) {
+        //         request(src).pipe(fs.createWriteStream(dest)).on('close', callback);
+        //     }
+        // };
+        //
+        // var destImage = dir+filename;
+        // console.log(destImage);
+        // bagpipe.push(downloadImage, uri, destImage,callback);
 
     },
     curl:function (uri,callback) {

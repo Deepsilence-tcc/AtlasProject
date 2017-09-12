@@ -122,7 +122,7 @@ exports.save_model = function (option,callback) {
 }
 exports.save_whole_data = function (option,callback) {
     callback = callback == null? nop:callback;
-    var sql = 'INSERT INTO data(id,title,date,is_fav,buy_count,modelId,pic,detail) VALUES(' + option.id + ',"'+ option.title + '","'+option.date+'",'+option.is_fav+','+option.buy_count+','+option.modelId+',"'+option.pic.path+'","'+option.detail+'")';
+    var sql = 'INSERT INTO data(id,title,date,is_fav,buy_count,modelId,pic) VALUES(' + option.id + ',"'+ option.title + '","'+option.date+'",'+option.is_fav+','+option.buy_count+','+option.modelId+',"'+option.pic.path+'")';
     query(sql, function(err, rows, fields) {
         if (err) {
             if(err.code == 'ER_DUP_ENTRY'){
@@ -155,7 +155,7 @@ exports.save_data_catalog = function (option,callback) {
 
 };
 exports.queryHomeData = function (option,callback) {
-    var sql = 'select   a.id,a.title,a.is_fav,a.buy_count,a.date,a.pic,b.name,b.portrait,b.id as id1,b.is_fav as fav from   data a  left join  model b     on   a.modelId=b.id   order by date  desc LIMIT '+(option.pageIndex-1)*option.pageSize+','+option.pageSize;
+    var sql = 'select   a.id,a.title,a.is_fav,a.buy_count,a.date,a.pic,b.name,b.portrait,b.id as id1,b.is_fav as fav from   data a  join  model b     on   a.modelId=b.id   order by date  desc LIMIT '+(option.pageIndex-1)*option.pageSize+','+option.pageSize;
     // select U.value,C.value from mete as M join cat as C on C.cid=M.cid join user as U on U.uid=M.uid
     //var sql = 'select   a.id,a.title.a.is_fav,a.buy_count,a.date,a.pic,b.*   from   data a   left   join  model b     on   a.modelId=b.id   order by date  desc'
    query(sql,function (err,rows,fields) {
@@ -173,7 +173,7 @@ exports.queryHomeData = function (option,callback) {
 
 }
 exports.count_data = function (callback) {
-    var sql = 'SELECT COUNT(id) as count FROM data';
+    var sql = 'SELECT COUNT(*) as count FROM data';
     query(sql,function (err,count,fields) {
         if (err) {
             if(err.code == 'ER_DUP_ENTRY'){
@@ -193,7 +193,26 @@ exports.queryDetail = function (option,callback) {
 
 }
 exports.saveDetail = function (option,callback) {
-    var sql = 'UPDATE data SET detail="'+option.path+'"where id='+option.id;
+    var sql =  "INSERT INTO detail(dataId,content) values('"+option.id+"','"+option.path+"')";
+    console.log(sql);
+    query(sql,function (err,rows,fields) {
+        if (err) {
+            if(err.code == 'ER_DUP_ENTRY'){
+                callback(err);
+                return;
+            }
+            callback(err);
+            throw err;
+        }
+        else{
+            callback(rows);
+        }
+    })
+}
+
+exports.getDetail = function (option,callback) {
+    // var sql = 'UPDATE data SET detail="'+option.path+'"where id='+option.id;
+    var sql = 'select a.content,b.id as daId,b.title from detail a left join data where a.dataId='+option.dataId;
     console.log(sql);
     query(sql,function (err,count,fields) {
         if (err) {
@@ -208,6 +227,47 @@ exports.saveDetail = function (option,callback) {
             callback(count);
         }
     })
+}
+exports.getData = function (pageIndex,callback) {
+    var sql = 'select a.id from data a order by date desc LIMIT '+(pageIndex-1)+', 1';
+
+    query(sql,function (err,rows,fields) {
+        if (err) {
+            if(err.code == 'ER_DUP_ENTRY'){
+                callback(err);
+                return;
+            }
+            callback(err);
+            throw err;
+        }
+        else{
+            callback(rows);
+        }
+    })
+};
+exports.is_Exist_detail=function (dataId,callback) {
+    callback = callback == null? nop:callback;
+    if(id == null){
+        callback(false);
+        return;
+    }
+
+    var sql = 'SELECT * FROM detail WHERE dataId = ' + dataId ;
+    query(sql, function(err, rows, fields) {
+        if (err) {
+            callback(false);
+            throw err;
+        }
+        else{
+            if(rows.length > 0){
+
+                callback(true);
+            }
+            else{
+                callback(false);
+            }
+        }
+    });
 }
 
 

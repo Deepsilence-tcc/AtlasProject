@@ -11,6 +11,7 @@ var Path = require('path');
 var Step = require('../utils/step')
 var CRYPTO = require('crypto');
 var HomeData = require('../model/home.data.model');
+var storeUtil = require('../utils/store');
 
 
 // var request = Promise.promisify(require('request'));
@@ -135,17 +136,6 @@ function saveData(item) {
                 item.detail = '';
                 dbUtil.save_whole_data(item, function (wholeData) {
                     if (wholeData) {
-                        var detailUrl = "http://vvn.78zhai.com/?p="+item.id +"&json=1&include=title%2Ccustom_fields&custom_fields=Cntpic%2Cprice%2Cvideo";
-                        NetUtil.curl(detailUrl).then(function (contentDetail) {
-                            if(contentDetail.post&&contentDetail.post.custom_fields.Cntpic.length>0){
-                                console.log('ssdfsdfs');
-                                var detailPic = contentDetail.post.custom_fields.Cntpic[0].split('|&|');
-                                var contentDir = 'D:/project/'+item.id;
-                                downDetailPic(detailPic,item.id,detailPic.length,contentDir);
-
-                            }
-                        })
-
                         if(item.custom_fields.thumb!=null&&item.custom_fields.thumb.length > 0){
                             saveCatagoryData(item);
                         }
@@ -160,34 +150,115 @@ function saveCatagoryData(item){
     dbUtil.save_data_catalog({dataId:item.id,catagoryId:item.categories[0].id},function (cata_data){
     })
 };
-function downDetailPic(picUrls,dataId,len,dir) {
-    console.log(picUrls,dataId,len,dir);
+
+exports.fetchDetail = function () {
+    //查询数据data 库 ,获取页数
+    dbUtil.count_data(function (count) {
+        console.log(count);
+        var pageIndex = parseInt((count[0].count/1));
+        console.log(pageIndex);
+        delayFetchData(pageIndex);
+    })
+    // NetUtil.curl(prefix.home).then(function (data) {
+    //     var totalCount = 10;
+    //     // var totalCount = data.count_total;
+    //     var self = this;
+    //     dbUtil.is_Exist_detail(function (isDetailExist) {
+    //         if(!isDetailExist){
+    //
+    //         }
+    //         if(count[0].count==totalCount){
+    //             return;
+    //         }else {
+    //
+    //             dbUtil.getData(leftCount,function (datas) {
+    //                 var len = datas.length;
+    //                 fetchDetailContent(datas,len);
+    //             })
+    //         }
+    //     })
+    //
+    // })
+}
+function delayFetchData(pageIndex) {
+    console.log('************************')
+    console.log(pageIndex);
+    if(pageIndex==0){
+        return;
+    }else {
+        dbUtil.getData(pageIndex,function (datas) {
+            var len = datas.length;
+
+            console.log(len)
+            fetchDetailContent(datas,len);
+
+        });
+        pageIndex--;
+        setTimeout(function () {
+            delayFetchData(pageIndex);
+        },10000)
+    }
+
+
+}
+function fetchDetailContent(datas,len){
+    var self = this;
     if(len==0){
         return;
     }else {
-        console.log(picUrls)
+        len--;
+
+
+       if(typeof (datas[0])=='undefined'){
+
+           //
+       }else {
+           var detailContentUrl ='http://vvn.78zhai.com/?json=1&include=title%2Ccustom_fields&custom_fields=Cntpic%2Cprice%2Cvideo&p=' +datas[0].id;
+           NetUtil.curl(detailContentUrl).then(function (detailContent) {
+               if(detailContent.post&&detailContent.post.custom_fields&&detailContent.post.custom_fields.Cntpic&&detailContent.post.custom_fields.Cntpic.length>0){
+                   var picUrls = detailContent.post.custom_fields.Cntpic[0].split('|&|');
+                   var finalPath = '';
+                   downDetailPic(picUrls,datas[len].id,picUrls.length,'');
+               }
+           })
+           setTimeout(function () {
+               fetchDetailContent(len);
+           },5000);
+       }
+
+    }
+}
+
+function downDetailPic(picUrls,dataId,len,finalPath) {
+    var dir = 'D:/project/'+dataId+'/'
+    if(len==0){
+        return;
+    }else {
+        len--;
         FileUtil.mkDirs(dir,function () {
-            len--;
+            // var extName = Path.extname(picUrls[len]);
+
             var fileName = picUrls[len].split('/')[picUrls[len].split('/').length-1];
             var picPath = "http://pic.78zhai.com" + "/i/WH_Phone_s/"+picUrls[len];
-            console.log(picPath);
             NetUtil.downloadFile(picPath,dir,fileName,function () {
-                var finalPath = '';
                 //    下载完成之后， 更新数据库
                 if(len==1){
+                    console.log(fileName);
                     finalPath += (dir+fileName);
                     dbUtil.saveDetail({id:dataId,path:finalPath},function (final) {
                         console.log("ok");
                     })
                 }else {
+                    console.log(len)
                     finalPath += (dir+fileName+'|&|');
+                    console.log(finalPath);
                 }
             })
         })
 
         setTimeout(function () {
-            downDetailPic(picUrls,dataId,len,dir);
-        },4000);
+            downDetailPic(picUrls,dataId,len,finalPath);
+        },1000);
     }
 }
 
