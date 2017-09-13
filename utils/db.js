@@ -155,9 +155,11 @@ exports.save_data_catalog = function (option,callback) {
 
 };
 exports.queryHomeData = function (option,callback) {
-    var sql = 'select   a.id,a.title,a.is_fav,a.buy_count,a.date,a.pic,b.name,b.portrait,b.id as id1,b.is_fav as fav from   data a  join  model b     on   a.modelId=b.id   order by date  desc LIMIT '+(option.pageIndex-1)*option.pageSize+','+option.pageSize;
+    var data_sql = 'select   a.id,a.title,a.is_fav,a.buy_count,a.date,a.pic,b.name,b.portrait,b.id as id1,b.is_fav as fav from   data a  join  model b     on   a.modelId=b.id   order by date  desc LIMIT '+(option.pageIndex-1)*option.pageSize+','+option.pageSize;
     // select U.value,C.value from mete as M join cat as C on C.cid=M.cid join user as U on U.uid=M.uid
-    //var sql = 'select   a.id,a.title.a.is_fav,a.buy_count,a.date,a.pic,b.*   from   data a   left   join  model b     on   a.modelId=b.id   order by date  desc'
+    var ca_sql = 'select DA.title DA.id as dId from data_cata as DA join data d on d.id=DA.dataId join categories as c on c.id=DA.catagoryId';
+
+    var sql = data_sql+ca_sql;
    query(sql,function (err,rows,fields) {
        if (err) {
                callback(err);
@@ -169,8 +171,6 @@ exports.queryHomeData = function (option,callback) {
            callback(rows);
        }
    })
-
-
 }
 exports.count_data = function (callback) {
     var sql = 'SELECT COUNT(*) as count FROM data';
@@ -229,7 +229,7 @@ exports.getDetail = function (option,callback) {
     })
 }
 exports.getData = function (pageIndex,callback) {
-    var sql = 'select a.id from data a order by date desc LIMIT '+(pageIndex-1)+', 1';
+    var sql = 'select a.id from data a order by date desc LIMIT '+(pageIndex-1)+', 5';
 
     query(sql,function (err,rows,fields) {
         if (err) {
@@ -252,7 +252,7 @@ exports.is_Exist_detail=function (dataId,callback) {
         return;
     }
 
-    var sql = 'SELECT  d.content FROM detail d WHERE dataId = ' + parseInt(dataId) ;
+    var sql = 'SELECT  d.content a.title a.id as daId FROM detail d WHERE dataId = ' + parseInt(dataId) +'left join data a' ;
     console.log(sql);
     query(sql, function(err, rows, fields) {
         if (err) {
@@ -265,14 +265,75 @@ exports.is_Exist_detail=function (dataId,callback) {
                 callback(rows[0]);
             }
             else{
-                callback(false);
+                callback(
+                 []
+                );
             }
         }
     });
 }
+exports.queryRankData = function (callback) {
+    var sql = 'select   a.id,a.title,a.is_fav,a.buy_count,a.date,a.pic,b.name,b.portrait,b.id as id1,b.is_fav as fav from   data a  join  model b     on   a.modelId=b.id   order by buy_count  desc LIMIT 1,50';
+    // select U.value,C.value from mete as M join cat as C on C.cid=M.cid join user as U on U.uid=M.uid
+    //var sql = 'select   a.id,a.title.a.is_fav,a.buy_count,a.date,a.pic,b.*   from   data a   left   join  model b     on   a.modelId=b.id   order by date  desc'
+    query(sql,function (err,rows,fields) {
+        if (err) {
+            callback(err);
+            return;
+            throw err;
+        }
+        else{
+            callback(rows);
+        }
+    })
+}
+exports.queryModels = function (pageIndex,callback) {
+    callback = callback == null? nop:callback;
+    if(pageIndex == null){
+        callback([]);
+        return;
+    }
+    var sql = 'SELECT  m.id m.name m.portrait FROM model m  LIMIT'+(pageIndex-1)*15+',15'
+    console.log(sql);
+    query(sql, function(err, rows, fields) {
+        if (err) {
+            callback(err);
+            throw err;
+        }
+        else{
+            if(rows.length > 0){
+                callback(rows);
+            }
+            else{
+                callback(
+                    []
+                );
+            }
+        }
+    });
+}
+exports.queryPerModel = function (modelId,callback) {
+    callback = callback == null? nop:callback;
+    if(modelId == null){
+        callback([]);
+        return;
+    }
+    var data_sql = 'select   a.id,a.title,a.is_fav,a.buy_count,a.date,a.pic,b.name,b.portrait,b.id as id1,b.is_fav as fav from   data a  join  model b     on   a.modelId=b.id   order by date  desc where b.id='+modelId;
+    // select U.value,C.value from mete as M join cat as C on C.cid=M.cid join user as U on U.uid=M.uid
+    var ca_sql = 'select DA.title DA.id as dId from data_cata as DA join data d on d.id=DA.dataId join categories as c on c.id=DA.catagoryId';
+    var sql = data_sql+ca_sql;
+    query(sql,function (err,rows,fields) {
+        if (err) {
+            callback(err);
+            return;
+            callback(err);
+            throw err;
+        }
+        else{
+            callback(rows);
+        }
+    })
 
-
-
-
+}
 
 exports.query = query;

@@ -20,10 +20,10 @@ var prefix = {
     // baseModelPath:'/Users/cong/learn/local/model/',
     // basePicPath:'/Users/cong/learn/local/up_to_date/'
 
-    baseModelPath:"D:/project/model/",
-    basePicPath:"D:/project/up_to_date/"
-    // basePicPath:"/home/local/up_to_date/",
-    // baseModelPath:"/home/local/model/",
+    // baseModelPath:"D:/project/model/",
+    // basePicPath:"D:/project/up_to_date/"
+    basePicPath:"/home/local/up_to_date/",
+    baseModelPath:"/home/local/model/",
 
 }
 exports.fetchData = function () {
@@ -155,7 +155,7 @@ exports.fetchDetail = function () {
     //查询数据data 库 ,获取页数
     dbUtil.count_data(function (count) {
         console.log(count);
-        var pageIndex = parseInt((count[0].count/1));
+        var pageIndex = parseInt((count[0].count/1000));
         console.log(pageIndex);
         delayFetchData(pageIndex);
     })
@@ -196,7 +196,7 @@ function delayFetchData(pageIndex) {
         pageIndex--;
         setTimeout(function () {
             delayFetchData(pageIndex);
-        },10000)
+        },20000)
     }
 
 
@@ -207,8 +207,6 @@ function fetchDetailContent(datas,len){
         return;
     }else {
         len--;
-
-
        if(typeof (datas[0])=='undefined'){
 
            //
@@ -223,14 +221,14 @@ function fetchDetailContent(datas,len){
            })
            setTimeout(function () {
                fetchDetailContent(len);
-           },5000);
+           },10000);
        }
 
     }
 }
 
 function downDetailPic(picUrls,dataId,len,finalPath) {
-    var dir = 'D:/project/'+dataId+'/'
+    var dir = '/home/'+dataId+'/'
     if(len==0){
         return;
     }else {
@@ -258,7 +256,7 @@ function downDetailPic(picUrls,dataId,len,finalPath) {
 
         setTimeout(function () {
             downDetailPic(picUrls,dataId,len,finalPath);
-        },1000);
+        },5000);
     }
 }
 
@@ -295,7 +293,7 @@ exports.getData=function(req,res,next){
 generateStruct = function (rows){
     var datas = [];
 
-    rows.forEach(function (item) {
+    rows[0].forEach(function (item) {
         var result = {};
 
         console.log(item);
@@ -304,7 +302,8 @@ generateStruct = function (rows){
         result.date = item.date;
         result.buy_count = item.buy_count;
         result.is_fav = item.is_fav;
-
+        result.custom_fields = {};
+        result.categories = [];
         if(item.id1!=null){
             result.model={
                 id:item.id1,
@@ -317,7 +316,14 @@ generateStruct = function (rows){
         }
 
         if(item.pic!=null){
-            result.pic = item.pic;
+            result.custom_fields.thumb=item.pic;
+        }
+        if(rows[1]){
+            var cate = {
+                id:rows[1].dId,
+                title:rows[1].title
+            }
+            result.categories.push(cate);
         }
         datas.push(result);
 
@@ -450,6 +456,114 @@ function server500(response, msg) {
 
 exports.fetchDetailData=function (req,res,next) {
     dbUtil.is_Exist_detail(req.query.dataId,function (row) {
-        return res.json(row)
+        var resultModel ={};
+        if(rows.length>0){
+            resultModel.code =1;
+            resultModel.post = generateDetail(rows);
+            resultModel.can_view_all =false
+            return res.json(resultModel);
+        }else {
+            resultModel.code =4;
+            resultModel.post = [];
+            resultModel.can_view_all =false
+            return res.json(resultModel);
+        }
     })
+}
+function generateDetail(rows) {
+    var datas=[];
+    rows.forEach(function (t) {
+        var result = {};
+        result.id = t.id;
+        result.title = t.title;
+        result.custom_fields = {};
+        if(t.content!=null){
+            result.custom_fields.Cntpic=[];
+            Cntpic.push(t.content);
+        }
+        datas.push(result);
+    })
+}
+
+exports.rank =function (req,res,next) {
+    var resultModel ={};
+    dbUtil.queryRankData(function (rows) {
+        if(rows.length>0){
+            resultModel.code=1;
+            resultModel.posts=generateStruct(rows);
+        }
+    })
+}
+exports.getGodess = function (req,res,next) {
+    var modelId = req.query.modelId;
+    var resultModel = {};
+    if(typeof modelId == 'undefined'||modelId==null||modelId==''){
+        resultModel.code=5;
+    }
+    dbUtil.queryPerModel(parseInt(modelId),function (rows) {
+        if(rows[0].length>0){
+            resultModel.code =1;
+            resultModel.model={
+                name: rows[0][0].id1,
+                portrait: rows[0][0].portrait,
+                is_fav: rows[0][0].is_fav
+            }
+            resultModel.posts = generateGodess(rows);
+            return res.json(resultModel);
+        }
+    })
+}
+function generateGodess(rows) {
+    var datas = [];
+
+    rows[0].forEach(function (item) {
+        var result = {};
+
+        console.log(item);
+        result.id = item.id;
+        result.title = item.title;
+        result.date = item.date;
+        result.buy_count = item.buy_count;
+        result.is_fav = item.is_fav;
+        result.custom_fields = {};
+        result.categories = [];
+
+        if(item.pic!=null){
+            result.custom_fields.thumb=item.pic;
+        }
+        if(rows[1]){
+            var cate = {
+                id:rows[1].dId,
+                title:rows[1].title
+            }
+            result.categories.push(cate);
+        }
+        datas.push(result);
+
+    })
+    return datas;
+}
+exports.getModels = function (req,res,next) {
+    var reqPageIndex = parseInt(req.query.pageIndex)>0?parseInt(req.query.pageIndex):1;
+    var resultModel ={}
+    dbUtil.queryModels(reqPageIndex,function (rows) {
+        if(rows.length>0){
+            resultModel.code=1;
+            resultModel.model=[];
+            rows.forEach(function (t) {
+                var result ={};
+                result.id = t.id;
+                result.name = t.name;
+                result.portrait = t.portrait;
+
+                resultModel.model.push(result);
+            })
+            return res.json(resultModel);
+        }else {
+            resultModel.code=4;
+            resultModel.model=[];
+            return res.json(resultModel);
+        }
+    })
+
 }

@@ -17,7 +17,7 @@
     "images": "^2.2.1",
     "jade": "^1.11.0",
     "morgan": "^1.8.1",
-    "mysql": "github:mysqljs/mysql",
+    "mysql": "mysql",
     "node-schedule": "^1.2.4",
     "request": "^2.81.0",
     "serve-favicon": "^2.4.2"
