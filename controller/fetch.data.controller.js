@@ -293,10 +293,8 @@ exports.getData=function(req,res,next){
 generateStruct = function (rows){
     var datas = [];
 
-    rows[0].forEach(function (item) {
+    rows.forEach(function (item) {
         var result = {};
-
-        console.log(item);
         result.id = item.id;
         result.title = item.title;
         result.date = item.date;
@@ -318,10 +316,14 @@ generateStruct = function (rows){
         if(item.pic!=null){
             result.custom_fields.thumb=item.pic;
         }
-        if(rows[1]){
+        if(item.dId){
             var cate = {
-                id:rows[1].dId,
-                title:rows[1].title
+                id:item.dId,
+                title:item.cTitle,
+                slug:item.slug,
+                description:item.description,
+                parent:item.parent,
+                post_count:item.post_count
             }
             result.categories.push(cate);
         }
@@ -455,7 +457,7 @@ function server500(response, msg) {
 }
 
 exports.fetchDetailData=function (req,res,next) {
-    dbUtil.is_Exist_detail(req.query.dataId,function (row) {
+    dbUtil.is_Exist_detail(req.query.dataId,function (rows) {
         var resultModel ={};
         if(rows.length>0){
             resultModel.code =1;
@@ -491,24 +493,31 @@ exports.rank =function (req,res,next) {
         if(rows.length>0){
             resultModel.code=1;
             resultModel.posts=generateStruct(rows);
+            return res.json(resultModel);
         }
     })
 }
 exports.getGodess = function (req,res,next) {
-    var modelId = req.query.modelId;
+    var modelId = req.query.modelid;
     var resultModel = {};
     if(typeof modelId == 'undefined'||modelId==null||modelId==''){
         resultModel.code=5;
+        resultModel.posts ={}
+        return res.json(resultModel);
     }
     dbUtil.queryPerModel(parseInt(modelId),function (rows) {
-        if(rows[0].length>0){
+        if(rows.length>0){
             resultModel.code =1;
             resultModel.model={
-                name: rows[0][0].id1,
-                portrait: rows[0][0].portrait,
-                is_fav: rows[0][0].is_fav
+                name: rows[0].id1,
+                portrait: rows[0].portrait,
+                is_fav: rows[0].is_fav
             }
             resultModel.posts = generateGodess(rows);
+            return res.json(resultModel);
+        }else {
+            resultModel.code=4;
+            resultModel.posts ={}
             return res.json(resultModel);
         }
     })
@@ -516,10 +525,9 @@ exports.getGodess = function (req,res,next) {
 function generateGodess(rows) {
     var datas = [];
 
-    rows[0].forEach(function (item) {
+    rows.forEach(function (item) {
         var result = {};
 
-        console.log(item);
         result.id = item.id;
         result.title = item.title;
         result.date = item.date;
@@ -531,10 +539,10 @@ function generateGodess(rows) {
         if(item.pic!=null){
             result.custom_fields.thumb=item.pic;
         }
-        if(rows[1]){
+        if(item.dId){
             var cate = {
-                id:rows[1].dId,
-                title:rows[1].title
+                id:item.dId,
+                title:item.cTitle,
             }
             result.categories.push(cate);
         }
